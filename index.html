@@ -18,7 +18,7 @@
         font-family: "Arial", sans-serif; /* Set font family */
       }
 
-       .category {
+      .category {
         cursor: pointer;
         margin-right: 10px;
       }
@@ -297,3 +297,47 @@
             product: product,
             count: productCounts[product],
           }));
+
+          // Update y scale domain
+          yScale.domain(productData.map((d) => d.product));
+
+          // Add new bars for products
+          svg
+            .selectAll(".product-bar")
+            .data(productData)
+            .enter()
+            .append("rect")
+            .attr("class", "product-bar")
+            .attr("x", 0)
+            .attr("y", (d) => yScale(d.product))
+            .attr("width", (d) => xScale(d.count))
+            .attr("height", yScale.bandwidth())
+            .attr("fill", "green");
+        }
+
+        // Initial chart rendering
+        renderChart();
+
+        // Event listener for year dropdown change
+        document
+          .getElementById("year-select")
+          .addEventListener("change", function () {
+            selectedYear = this.value;
+            if (previousCategory) {
+              renderSubcategoryChart(previousCategory);
+            } else {
+              renderChart();
+            }
+          });
+
+        document
+          .getElementById("back-button")
+          .addEventListener("click", function () {
+            selectedYear = previousYear;
+            previousCategory = null;
+            renderChart();
+          });
+      });
+    </script>
+  </body>
+</html>
