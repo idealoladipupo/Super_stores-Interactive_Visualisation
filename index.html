@@ -18,7 +18,7 @@
         font-family: "Arial", sans-serif; /* Set font family */
       }
 
-      .category {
+       .category {
         cursor: pointer;
         margin-right: 10px;
       }
@@ -149,3 +149,151 @@
                 .style("left", event.pageX + "px")
                 .style("top", event.pageY - 28 + "px");
             })
+            .on("mouseout", function (d) {
+              tooltip.transition().duration(500).style("opacity", 0);
+            })
+            .on("click", function (event, category) {
+              previousYear = selectedYear;
+              previousCategory = category;
+              renderSubcategoryChart(category);
+            })
+            .transition() // Add transition
+            .duration(3000) // Duration of transition (2 seconds)
+            .ease(d3.easeElasticOut) // Use easing function for smooth appearance
+            .attr("y", (category) =>
+              yScale(
+                data
+                  .filter((d) => d[0] == selectedYear && d[1] === category)
+                  .reduce((acc, curr) => acc + curr[4], 0)
+              )
+            )
+            .attr(
+              "height",
+              (category) =>
+                height -
+                yScale(
+                  data
+                    .filter((d) => d[0] == selectedYear && d[1] === category)
+                    .reduce((acc, curr) => acc + curr[4], 0)
+                )
+            );
+        }
+
+        function renderSubcategoryChart(category) {
+          const subcategories = product_sub_categories[category];
+          const maxValue = d3.max(subcategories, (subcategory) => {
+            return data
+              .filter(
+                (d) =>
+                  d[0] == selectedYear &&
+                  d[1] === category &&
+                  d[2] === subcategory
+              )
+              .reduce((acc, curr) => acc + curr[4], 0);
+          });
+
+          xScale.domain(subcategories);
+          yScale.domain([0, maxValue]);
+
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+
+          svg.selectAll("*").remove();
+
+          svg
+            .append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(xAxis)
+            .selectAll(".tick text")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-35)");
+
+          svg.append("g").attr("class", "y-axis").call(yAxis);
+
+          svg
+            .selectAll(".subcategory-bar")
+            .data(subcategories)
+            .enter()
+            .append("rect")
+            .attr("class", "subcategory-bar")
+            .attr("x", (subcategory) => xScale(subcategory))
+            .attr("y", height) // Set initial y position to bottom
+            .attr("width", xScale.bandwidth())
+            .attr("height", 0) // Set initial height to 0
+            .on("mouseover", function (event, subcategory) {
+              tooltip.transition().duration(200).style("opacity", 0.9);
+              tooltip
+                .html(
+                  `${subcategory}, $${data
+                    .filter(
+                      (d) =>
+                        d[0] == selectedYear &&
+                        d[1] === category &&
+                        d[2] === subcategory
+                    )
+                    .reduce((acc, curr) => acc + curr[4], 0)}`
+                )
+                .style("left", event.pageX + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
+            .on("mouseout", function (d) {
+              tooltip.transition().duration(500).style("opacity", 0);
+            })
+            .on("click", function (event, subcategory) {
+              // Filter data for selected sub-category
+              const selectedProducts = data
+                .filter((d) => d[1] === subcategory)
+                .map((d) => d[3]);
+
+              // Render new bar chart for selected products
+              renderProductBarChart(selectedProducts);
+            })
+            .transition() // Add transition
+            .duration(800) // Duration of transition
+            .attr("y", (subcategory) =>
+              yScale(
+                data
+                  .filter(
+                    (d) =>
+                      d[0] == selectedYear &&
+                      d[1] === category &&
+                      d[2] === subcategory
+                  )
+                  .reduce((acc, curr) => acc + curr[4], 0)
+              )
+            )
+            .attr(
+              "height",
+              (subcategory) =>
+                height -
+                yScale(
+                  data
+                    .filter(
+                      (d) =>
+                        d[0] == selectedYear &&
+                        d[1] === category &&
+                        d[2] === subcategory
+                    )
+                    .reduce((acc, curr) => acc + curr[4], 0)
+                )
+            );
+        }
+
+        function renderProductBarChart(products) {
+          // Remove existing bars
+          svg.selectAll(".product-bar").remove();
+
+          // Count occurrences of each product
+          const productCounts = {};
+          products.forEach((product) => {
+            productCounts[product] = (productCounts[product] || 0) + 1;
+          });
+
+          // Convert product counts to array of objects
+          const productData = Object.keys(productCounts).map((product) => ({
+            product: product,
+            count: productCounts[product],
+          }));
