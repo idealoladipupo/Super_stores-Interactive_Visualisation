@@ -54,5 +54,48 @@
     <button id="back-button">Back</button>
 
     <div class="tooltip"></div>
-  </body>
-</html>
+
+    <script>
+      // Load data from super_stores.json
+      d3.json("super_stores.json").then(function (data) {
+        const product_categories = [
+          "Technology",
+          "Furniture",
+          "Office Supplies",
+        ];
+        const product_sub_categories = {
+          Technology: ["Phones", "Accessories", "Machines", "Copiers"],
+          Furniture: ["Chairs", "Tables", "Furnishings", "Bookcases"],
+          "Office Supplies": [
+            "Appliances",
+            "Binders",
+            "Storage",
+            "Fasteners",
+            "Labels",
+            "Supplies",
+          ],
+        };
+
+        const margin = { top: 20, right: 20, bottom: 50, left: 60 };
+        const width = 600 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+
+        const svg = d3
+          .select("#chart")
+          .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const xScale = d3.scaleBand().range([0, width]).padding(0.1);
+        const yScale = d3.scaleLinear().range([height, 0]);
+        const tooltip = d3
+          .select("body")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
+
+        let selectedYear = "2012"; // Initialize selectedYear
+        let previousYear;
+        let previousCategory;
