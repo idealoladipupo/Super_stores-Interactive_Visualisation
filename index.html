@@ -99,3 +99,53 @@
         let selectedYear = "2012"; // Initialize selectedYear
         let previousYear;
         let previousCategory;
+
+        function renderChart() {
+          const maxValue = d3.max(product_categories, (category) => {
+            return data
+              .filter((d) => d[0] == selectedYear && d[1] === category)
+              .reduce((acc, curr) => acc + curr[4], 0);
+          });
+
+          xScale.domain(product_categories);
+          yScale.domain([0, maxValue]);
+
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+
+          svg.selectAll("*").remove();
+
+          svg
+            .append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(xAxis)
+            .selectAll(".tick text")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-35)");
+
+          svg.append("g").attr("class", "y-axis").call(yAxis);
+
+          svg
+            .selectAll(".bar")
+            .data(product_categories)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", (category) => xScale(category))
+            .attr("y", height) // Set initial y position to bottom
+            .attr("width", xScale.bandwidth())
+            .attr("height", 0) // Set initial height to 0
+            .on("mouseover", function (event, category) {
+              tooltip.transition().duration(200).style("opacity", 0.9);
+              tooltip
+                .html(
+                  `${category}, $${data
+                    .filter((d) => d[0] == selectedYear && d[1] === category)
+                    .reduce((acc, curr) => acc + curr[4], 0)}`
+                )
+                .style("left", event.pageX + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
